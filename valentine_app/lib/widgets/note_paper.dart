@@ -10,28 +10,43 @@ class NotePaper extends StatefulWidget {
 
 class _NotePaperState extends State<NotePaper> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _slideUpAnimation;
   late final Animation<double> _rotateAnimation;
+  late final Animation<double> _scaleAnimation;
   late final Animation<double> _unfoldAnimation;
+  late final Animation<double> _fadeInAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.1, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.elasticOut)),
+    // Paper slides up from bottom as if coming out of envelope
+    _slideUpAnimation = Tween<double>(begin: 80, end: 0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
     );
 
-    _rotateAnimation = Tween<double>(begin: 0.3, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
+    // Initial rotation as paper emerges, then settles
+    _rotateAnimation = Tween<double>(begin: 0.25, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic)),
     );
 
+    // Scale up for prominence
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack)),
+    );
+
+    // Content unfold/reveal
     _unfoldAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 1.0, curve: Curves.easeInOut)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.35, 1.0, curve: Curves.easeInOutCubic)),
+    );
+
+    // Fade in for smoothness
+    _fadeInAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.3, curve: Curves.easeIn)),
     );
 
     _controller.forward();
@@ -48,16 +63,19 @@ class _NotePaperState extends State<NotePaper> with SingleTickerProviderStateMix
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..scale(_scaleAnimation.value, _scaleAnimation.value)
-            ..rotateZ(_rotateAnimation.value),
-          child: Transform.translate(
-            offset: Offset(0, (1 - _unfoldAnimation.value) * 20),
-            child: _VintagePaper(
-              content: widget.content,
-              unfoldProgress: _unfoldAnimation.value,
+        return Transform.translate(
+          offset: Offset(0, _slideUpAnimation.value),
+          child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..scale(_scaleAnimation.value, _scaleAnimation.value)
+              ..rotateZ(_rotateAnimation.value),
+            child: Opacity(
+              opacity: _fadeInAnimation.value,
+              child: _VintagePaper(
+                content: widget.content,
+                unfoldProgress: _unfoldAnimation.value,
+              ),
             ),
           ),
         );
