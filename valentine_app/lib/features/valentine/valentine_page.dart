@@ -38,31 +38,128 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
   Widget build(BuildContext context) {
     final memories = List.generate(6, (i) => 'assets/images/valentine_memory${i + 1}.png');
     return Scaffold(
-      appBar: AppBar(title: const Text('Feb 14 - Valentine'), backgroundColor: Colors.transparent, elevation: 0),
+      appBar: AppBar(
+        title: const Text('Our Love Journey'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.pink,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          const SizedBox(height: 8),
-          ...memories.asMap().entries.map((e) => _MemoryTile(index: e.key, imagePath: e.value)),
-          const SizedBox(height: 32),
-          const Text('I love you', style: TextStyle(fontSize: 32, fontFamily: 'Handwritten')),
-          const SizedBox(height: 24),
-        ]),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            _JourneyPath(memories: memories),
+            const SizedBox(height: 48),
+            const Text(
+              'I love you ♥',
+              style: TextStyle(fontSize: 36, fontFamily: 'Handwritten', color: Colors.pink, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _MemoryTile extends StatefulWidget {
-  final int index;
-  final String imagePath;
-  const _MemoryTile({required this.index, required this.imagePath});
+class _JourneyPath extends StatelessWidget {
+  final List<String> memories;
+  const _JourneyPath({required this.memories});
 
   @override
-  State<_MemoryTile> createState() => _MemoryTileState();
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(memories.length, (index) {
+        final isOdd = index % 2 == 1;
+        return Padding(
+          padding: EdgeInsets.only(bottom: 48),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (isOdd) ...[
+                Expanded(child: SizedBox.shrink()),
+                const SizedBox(width: 16),
+              ],
+              _PathNode(index: index, isOdd: isOdd),
+              const SizedBox(width: 16),
+              if (!isOdd)
+                Expanded(child: SizedBox.shrink()),
+              Expanded(
+                child: _PhotoCard(imagePath: memories[index], index: index),
+              ),
+              if (isOdd)
+                Expanded(child: SizedBox.shrink()),
+            ],
+          ),
+        );
+      }),
+    );
+  }
 }
 
-class _MemoryTileState extends State<_MemoryTile> {
+class _PathNode extends StatelessWidget {
+  final int index;
+  final bool isOdd;
+  const _PathNode({required this.index, required this.isOdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Connector line above
+        if (index > 0)
+          SizedBox(
+            height: 48,
+            width: 2,
+            child: CustomPaint(
+              painter: _CurvePathPainter(isOdd: isOdd),
+            ),
+          ),
+        // Node circle
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.pink, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pink.withValues(alpha: 0.4),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Colors.pink,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhotoCard extends StatefulWidget {
+  final String imagePath;
+  final int index;
+  const _PhotoCard({required this.imagePath, required this.index});
+
+  @override
+  State<_PhotoCard> createState() => _PhotoCardState();
+}
+
+class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
   bool _flipped = false;
 
   final List<String> _notes = [
@@ -75,56 +172,185 @@ class _MemoryTileState extends State<_MemoryTile> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleFlip() {
+    if (_flipped) {
+      _controller.reverse();
+    } else {
+      _controller.forward();
+    }
+    _flipped = !_flipped;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => setState(() => _flipped = !_flipped),
+      onTap: _toggleFlip,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final angle = _controller.value * 3.14159;
+          final isBack = _controller.value > 0.5;
+
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(angle),
+            child: isBack
+                ? Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..rotateY(3.14159),
+                    child: _NoteCard(note: _notes[widget.index]),
+                  )
+                : _SquarePhotoCard(imagePath: widget.imagePath),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SquarePhotoCard extends StatelessWidget {
+  final String imagePath;
+  const _SquarePhotoCard({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 12),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
-          transitionBuilder: (w, a) => ScaleTransition(scale: a, child: w),
-          child: _flipped
-              ? Container(
-                  key: ValueKey('note_${widget.index}'),
-                  padding: const EdgeInsets.all(20),
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)],
-                  border: Border.all(color: Colors.pink.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _notes[widget.index],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 18, fontFamily: 'Handwritten', height: 1.6),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text('(Tap to see photo)', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                )
-              : Container(
-                  key: ValueKey('photo_${widget.index}'),
-                  height: 200,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      widget.imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.pink[100],
-                        child: const Center(child: Text('Photo\n(Replace with your image)', textAlign: TextAlign.center)),
-                      ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.pink.withValues(alpha: 0.3),
+              blurRadius: 12,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: Colors.pink[100],
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.image, size: 48, color: Colors.pink),
+                    SizedBox(height: 8),
+                    Text(
+                      'Photo',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.pink),
                     ),
-                  ),
+                  ],
                 ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+class _NoteCard extends StatelessWidget {
+  final String note;
+  const _NoteCard({required this.note});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.pink.withValues(alpha: 0.3), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.pink.withValues(alpha: 0.3),
+              blurRadius: 12,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  note,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Handwritten',
+                    height: 1.6,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '💕',
+                  style: TextStyle(fontSize: 24),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CurvePathPainter extends CustomPainter {
+  final bool isOdd;
+  _CurvePathPainter({required this.isOdd});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.pink.withValues(alpha: 0.4)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    path.moveTo(size.width / 2, 0);
+
+    // Curved path connecting nodes
+    path.cubicTo(
+      size.width / 2,
+      size.height / 3,
+      size.width / 2,
+      (2 * size.height) / 3,
+      size.width / 2,
+      size.height,
+    );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_CurvePathPainter oldDelegate) => false;
 }
