@@ -139,7 +139,7 @@ class _DayPageState extends State<DayPage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFFF0F5), color.withOpacity(0.1)],
+                colors: [Color(0xFFFFF0F5), color.withValues(alpha: 0.1)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),

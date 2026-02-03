@@ -79,12 +79,17 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
     };
 
   bool _locked(int day) {
-    return isBeforeDay(day, DateTime.now());
+    return false; // Unlocked for testing - all days accessible
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Valentine Week'),
+        backgroundColor: AppTheme.primary,
+        elevation: 0,
+      ),
       drawer: Drawer(
         child: SafeArea(
           child: ListView(
@@ -129,7 +134,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                           Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
                         },
                 );
-              }).toList(),
+              }),
               ListTile(
                 leading: const Icon(Icons.favorite, color: Colors.pink),
                 title: const Text('Valentine Day'),
@@ -169,8 +174,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Welcome ♥'))),
-                child: const Text('Open'),
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                child: const Text('Open'),
               ),
             ]),
           ),
@@ -209,7 +214,7 @@ class _GlowingHeartState extends State<_GlowingHeart> with SingleTickerProviderS
       builder: (context, child) {
         final glow = 0.6 + 0.4 * _c.value;
         return Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.pink.withOpacity(glow * 0.45), blurRadius: 12 * glow)]),
+          decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.pink.withValues(alpha: glow * 0.45), blurRadius: 12 * glow)]),
           child: const Icon(Icons.favorite, color: Colors.pink, size: 28),
         );
       },

@@ -43,7 +43,7 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
         padding: const EdgeInsets.all(16),
         child: Column(children: [
           const SizedBox(height: 8),
-          ...memories.asMap().entries.map((e) => _MemoryTile(index: e.key, imagePath: e.value)).toList(),
+          ...memories.asMap().entries.map((e) => _MemoryTile(index: e.key, imagePath: e.value)),
           const SizedBox(height: 32),
           const Text('I love you', style: TextStyle(fontSize: 32, fontFamily: 'Handwritten')),
           const SizedBox(height: 24),
@@ -91,8 +91,8 @@ class _MemoryTileState extends State<_MemoryTile> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
-                    border: Border.all(color: Colors.pink.withOpacity(0.3)),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)],
+                  border: Border.all(color: Colors.pink.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +110,7 @@ class _MemoryTileState extends State<_MemoryTile> {
               : Container(
                   key: ValueKey('photo_${widget.index}'),
                   height: 200,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)]),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)]),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(

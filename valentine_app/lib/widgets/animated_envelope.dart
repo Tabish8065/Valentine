@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class AnimatedEnvelope extends StatefulWidget {
   final VoidCallback? onOpen;
   final Color accentColor;
-  const AnimatedEnvelope({this.onOpen, this.accentColor = Colors.pink});
+  const AnimatedEnvelope({super.key, this.onOpen, this.accentColor = Colors.pink});
 
   @override
   State<AnimatedEnvelope> createState() => _AnimatedEnvelopeState();
 }
 
-class _AnimatedEnvelopeState extends State<AnimatedEnvelope> with SingleTickerProviderStateMixin {
+class _AnimatedEnvelopeState extends State<AnimatedEnvelope> with TickerProviderStateMixin {
   late final AnimationController _openCtrl;
   late final AnimationController _wiggleCtrl;
   late final Animation<double> _flapAnim;
@@ -67,7 +67,7 @@ class _AnimatedEnvelopeState extends State<AnimatedEnvelope> with SingleTickerPr
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 12)],
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 12)],
                   ),
                 ),
               ),
@@ -77,19 +77,22 @@ class _AnimatedEnvelopeState extends State<AnimatedEnvelope> with SingleTickerPr
                 child: AnimatedBuilder(
                   animation: _flapAnim,
                   builder: (context, child) {
-                    return Transform(
+                  return Transform.translate(
+                    offset: Offset(0.0, _flapAnim.value * 8),
+                    child: Transform(
                       alignment: Alignment.topCenter,
-                      transform: Matrix4.rotationX(_flapAnim.value)..translate(0.0, _flapAnim.value * 8),
+                      transform: Matrix4.rotationX(_flapAnim.value),
                       child: child,
-                    );
+                    ),
+                  );
                   },
                   child: Container(
                     width: 240,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: widget.accentColor.withOpacity(0.15),
+                      color: widget.accentColor.withValues(alpha: 0.15),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      border: Border.all(color: widget.accentColor.withOpacity(0.3), width: 1),
+                      border: Border.all(color: widget.accentColor.withValues(alpha: 0.3), width: 1),
                     ),
                     child: Center(
                       child: Icon(

@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.3.6
   just_audio: ^0.9.39
-  vibration: ^1.7.5
+  vibration: ^3.1.5
   lottie: ^2.4.0
 
 dev_dependencies:

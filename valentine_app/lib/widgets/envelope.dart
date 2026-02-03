@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class Envelope extends StatefulWidget {
   final VoidCallback? onOpen;
-  const Envelope({this.onOpen});
+  const Envelope({super.key, this.onOpen});
 
   @override
   State<Envelope> createState() => _EnvelopeState();
@@ -51,7 +51,7 @@ class _EnvelopeState extends State<Envelope> with SingleTickerProviderStateMixin
             Positioned.fill(
               child: Container(
                 margin: const EdgeInsets.only(top: 18),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10)]),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10)]),
               ),
             ),
             // flap
@@ -60,10 +60,13 @@ class _EnvelopeState extends State<Envelope> with SingleTickerProviderStateMixin
               child: AnimatedBuilder(
                 animation: _flapAnim,
                 builder: (context, child) {
-                  return Transform(
-                    alignment: Alignment.topCenter,
-                    transform: Matrix4.rotationX(_flapAnim.value)..translate(0.0, _flapAnim.value * 6),
-                    child: child,
+                  return Transform.translate(
+                    offset: Offset(0.0, _flapAnim.value * 6),
+                    child: Transform(
+                      alignment: Alignment.topCenter,
+                      transform: Matrix4.rotationX(_flapAnim.value),
+                      child: child,
+                    ),
                   );
                 },
                 child: Container(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DayIcon extends StatefulWidget {
   final IconData icon;
   final Color color;
-  const DayIcon({required this.icon, required this.color});
+  const DayIcon({super.key, required this.icon, required this.color});
 
   @override
   State<DayIcon> createState() => _DayIconState();
@@ -43,7 +43,7 @@ class _DayIconState extends State<DayIcon> with SingleTickerProviderStateMixin {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withOpacity(0.6 * _glow.value),
+                    color: widget.color.withValues(alpha: 0.6 * _glow.value),
                     blurRadius: 20 * _glow.value,
                   ),
                 ],

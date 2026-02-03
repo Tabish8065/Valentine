@@ -61,11 +61,11 @@ class _HeartsPainter extends CustomPainter {
       final y = progress * size.height;
       final scale = 0.6 + 0.8 * (1 - progress);
       final radius = 6.0 * scale + (i % 3) * 1.5;
-      paint.color = Colors.pink.withOpacity(0.18 + (i % 4) * 0.08);
+      paint.color = Colors.pink.withValues(alpha: 0.18 + (i % 4) * 0.08);
       canvas.drawCircle(Offset(x, y), radius, paint);
       // small sparkle
       if ((i + (t * 1000).toInt()) % 17 == 0) {
-        paint.color = Colors.white.withOpacity(0.4);
+        paint.color = Colors.white.withValues(alpha: 0.4);
         canvas.drawCircle(Offset(x + radius, y - radius * 0.6), radius * 0.25, paint);
       }
     }
