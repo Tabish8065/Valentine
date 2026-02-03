@@ -153,7 +153,10 @@ class _DayPageState extends State<DayPage> {
                 children: [
                   DayIcon(icon: icon, color: color),
                   const SizedBox(height: 32),
-                  AnimatedEnvelope(onOpen: _openEnvelope, accentColor: color),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: _noteVisible ? const SizedBox.shrink() : AnimatedEnvelope(onOpen: _openEnvelope, accentColor: color),
+                  ),
                   const SizedBox(height: 24),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
