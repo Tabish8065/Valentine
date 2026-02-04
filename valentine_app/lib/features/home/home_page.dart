@@ -15,6 +15,7 @@ import '../days/kiss_page.dart';
 import '../valentine/valentine_page.dart';
 import 'dart:async';
 import '../../widgets/falling_hearts.dart';
+import 'dart:math';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -24,11 +25,31 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final Stream<DateTime> _countdownStream;
+
+  // Define unlock dates for each Valentine week day
+  // Pages will be locked until their respective date arrives
+  static const Map<int, int> pageUnlockDates = {
+    // For testing: map actual days to Feb 1..7 so pages unlock earlier
+    1: 1,   // Rose Day - Test unlock Feb 1
+    2: 1,   // Propose Day - Test unlock Feb 2
+    3: 1,   // Chocolate Day - Test unlock Feb 3
+    4: 1,   // Teddy Day - Test unlock Feb 4
+    5: 1,   // Promise Day - Test unlock Feb 5
+    6: 1,   // Hug Day - Test unlock Feb 6
+    7: 1,   // Kiss Day - Test unlock Feb 7
+    8: 1,   // Valentine Day - Test unlock Feb 8
+  };
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
+    
+    // Create a broadcast stream that emits the current time every second
+    // Use asBroadcastStream() to allow multiple listeners
+    _countdownStream = Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()).asBroadcastStream();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoNavigate());
 
     // start optional background audio for the home screen
@@ -69,17 +90,45 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   }
 
     final Map<int, String> _days = const {
-      7: 'Rose Day',
-      8: 'Propose Day',
-      9: 'Chocolate Day',
-      10: 'Teddy Day',
-      11: 'Promise Day',
-      12: 'Hug Day',
-      13: 'Kiss Day',
+      1: 'Rose Day',
+      2: 'Propose Day',
+      3: 'Chocolate Day',
+      4: 'Teddy Day',
+      5: 'Promise Day',
+      6: 'Hug Day',
+      7: 'Kiss Day',
     };
 
   bool _locked(int day) {
-    return false; // Unlocked for testing - all days accessible
+    final now = DateTime.now();
+    final unlockDate = pageUnlockDates[day];
+
+    if (unlockDate == null) return true; // Safety: lock if day not found
+
+    // Page is locked if current date is before the unlock date in February
+    return now.month != 2 || now.day < unlockDate;
+  }
+
+  String _getCountdownText(int day) {
+    final now = DateTime.now();
+    final unlockDate = pageUnlockDates[day];
+    
+    if (unlockDate == null) return 'N/A';
+    
+    // Create unlock datetime for Feb [day] at 00:00:00
+    final targetDate = DateTime(now.year, 2, unlockDate, 0, 0, 0);
+    
+    // If we're past the unlock date, return empty
+    if (!now.isBefore(targetDate)) return '';
+    
+    final remaining = targetDate.difference(now);
+    
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+    
+    return '$days days $hours hrs $minutes mins $seconds secs remaining';
   }
 
   @override
@@ -97,48 +146,64 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
             children: [
               const DrawerHeader(child: Text('Valentine Week', style: TextStyle(fontSize: 20))),
               ..._days.entries.map((e) {
-                final locked = _locked(e.key);
-                return ListTile(
-                  leading: Icon(locked ? Icons.lock : Icons.check, color: locked ? Colors.grey : AppTheme.primary),
-                  title: Text(e.value),
-                  subtitle: locked ? Text('Locked until Feb ${e.key}') : null,
-                  onTap: locked
-                      ? null
-                      : () {
-                          Widget page;
-                          switch (e.key) {
-                            case 7:
-                              page = const RosePage();
-                              break;
-                            case 8:
-                              page = const ProposePage();
-                              break;
-                            case 9:
-                              page = const ChocolatePage();
-                              break;
-                            case 10:
-                              page = const TeddyPage();
-                              break;
-                            case 11:
-                              page = const PromisePage();
-                              break;
-                            case 12:
-                              page = const HugPage();
-                              break;
-                            case 13:
-                              page = const KissPage();
-                              break;
-                            default:
-                              page = DayPage(day: e.key);
-                          }
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-                        },
+                final entry = e; // capture per-iteration value to avoid closure capture bug
+                final locked = _locked(entry.key);
+                return StreamBuilder<DateTime>(
+                  stream: _countdownStream,
+                  builder: (context, snapshot) {
+                    return ListTile(
+                      leading: Icon(locked ? Icons.lock : Icons.check, color: locked ? Colors.grey : AppTheme.primary),
+                      title: Text(entry.value),
+                      subtitle: locked ? Text(_getCountdownText(entry.key), style: const TextStyle(fontSize: 12)) : null,
+                      onTap: locked
+                          ? null
+                          : () {
+                              Widget page;
+                              switch (entry.key) {
+                                case 1:
+                                  page = const RosePage();
+                                  break;
+                                case 2:
+                                  page = const ProposePage();
+                                  break;
+                                case 3:
+                                  page = const ChocolatePage();
+                                  break;
+                                case 4:
+                                  page = const TeddyPage();
+                                  break;
+                                case 5:
+                                  page = const PromisePage();
+                                  break;
+                                case 6:
+                                  page = const HugPage();
+                                  break;
+                                case 7:
+                                  page = const KissPage();
+                                  break;
+                                default:
+                                  page = DayPage(day: entry.key);
+                              }
+                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+                            },
+                    );
+                  },
                 );
               }),
-              ListTile(
-                leading: const Icon(Icons.favorite, color: Colors.pink),
-                title: const Text('Valentine Day'),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ValentinePage())),
+              StreamBuilder<DateTime>(
+                stream: _countdownStream,
+                builder: (context, snapshot) {
+                  final locked = _locked(8);
+                  final countdown = _getCountdownText(8);
+                  return ListTile(
+                    leading: Icon(locked ? Icons.lock : Icons.favorite, color: locked ? Colors.grey : Colors.pink),
+                    title: const Text('Valentine Day'),
+                    subtitle: locked && countdown.isNotEmpty ? Text(countdown, style: const TextStyle(fontSize: 12)) : null,
+                    onTap: locked
+                        ? null
+                        : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ValentinePage())),
+                  );
+                },
               )
             ],
           ),
@@ -166,7 +231,7 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
                   );
                 },
                 child: Row(mainAxisSize: MainAxisSize.min, children: const [
-                  Text('Hi Zainab, my love ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
+                  Text('Hi Name, my love ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
                   SizedBox(width: 8),
                   _GlowingHeart(),
                 ]),
