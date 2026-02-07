@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.8
+  sdk: ^3.9.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -36,8 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.3.6
   just_audio: ^0.9.39
-  vibration: ^3.1.5
-  lottie: ^2.4.0
 
 dev_dependencies:
   flutter_test:

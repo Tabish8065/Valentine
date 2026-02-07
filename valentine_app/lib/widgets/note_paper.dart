@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants.dart';
 
 class NotePaper extends StatefulWidget {
   final String? content;
@@ -8,7 +9,8 @@ class NotePaper extends StatefulWidget {
   State<NotePaper> createState() => _NotePaperState();
 }
 
-class _NotePaperState extends State<NotePaper> with SingleTickerProviderStateMixin {
+class _NotePaperState extends State<NotePaper>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _slideUpAnimation;
   late final Animation<double> _rotateAnimation;
@@ -20,33 +22,48 @@ class _NotePaperState extends State<NotePaper> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1400),
+      duration: Anim.noteReveal,
       vsync: this,
     );
 
-    // Paper slides up from bottom as if coming out of envelope
+    // Paper slides up from bottom as if coming out of envelope.
     _slideUpAnimation = Tween<double>(begin: 80, end: 0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+      ),
     );
 
-    // Initial rotation as paper emerges, then settles
+    // Initial rotation as paper emerges, then settles.
     _rotateAnimation = Tween<double>(begin: 0.25, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
+      ),
     );
 
-    // Scale up for prominence
+    // Scale up with a satisfying overshoot.
     _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
+      ),
     );
 
-    // Content unfold/reveal
+    // Content unfold/reveal.
     _unfoldAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.35, 1.0, curve: Curves.easeInOutCubic)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.35, 1.0, curve: Curves.easeInOutCubic),
+      ),
     );
 
-    // Fade in for smoothness
+    // Smooth fade in.
     _fadeInAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.3, curve: Curves.easeIn)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
+      ),
     );
 
     _controller.forward();
@@ -60,26 +77,31 @@ class _NotePaperState extends State<NotePaper> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _slideUpAnimation.value),
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..scale(_scaleAnimation.value, _scaleAnimation.value)
-              ..rotateZ(_rotateAnimation.value),
-            child: Opacity(
-              opacity: _fadeInAnimation.value,
-              child: _VintagePaper(
-                content: widget.content,
-                unfoldProgress: _unfoldAnimation.value,
+    // RepaintBoundary isolates the note paper animations.
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _slideUpAnimation.value),
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(
+                _scaleAnimation.value,
+                _scaleAnimation.value,
+                1.0,
+              )..rotateZ(_rotateAnimation.value),
+              child: Opacity(
+                opacity: _fadeInAnimation.value,
+                child: _VintagePaper(
+                  content: widget.content,
+                  unfoldProgress: _unfoldAnimation.value,
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -105,22 +127,19 @@ class _VintagePaper extends StatelessWidget {
           opacity: unfoldProgress.clamp(0.0, 1.0),
           child: Column(
             children: [
-              // Torn paper effect wrapper
+              // Torn paper effect wrapper.
               ClipPath(
                 clipper: _TornEdgesClipper(),
                 child: Transform(
                   alignment: Alignment.center,
                   transform: Matrix4.identity()
-                    ..rotateZ((unfoldProgress - 0.5) * 0.05), // Slight rotation for organic feel
+                    ..rotateZ((unfoldProgress - 0.5) * 0.05),
                   child: Container(
                     width: 280,
                     height: paperHeight,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color(0xFFFFFBF0),
-                          Color(0xFFEDE4D3),
-                        ],
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFFBF0), Color(0xFFEDE4D3)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -140,19 +159,19 @@ class _VintagePaper extends StatelessWidget {
                     ),
                     child: Stack(
                       children: [
-                        // Authentic paper texture
+                        // Paper texture (static — doesn't repaint).
                         Positioned.fill(
                           child: CustomPaint(
                             painter: _AuthenticPaperTexturePainter(),
                           ),
                         ),
-                        // Aged stains and spots
+                        // Aged stains (static).
                         Positioned.fill(
                           child: CustomPaint(
                             painter: _PaperAgingPainter(),
                           ),
                         ),
-                        // Main content
+                        // Main content.
                         Positioned.fill(
                           child: Padding(
                             padding: EdgeInsets.symmetric(
@@ -164,14 +183,15 @@ class _VintagePaper extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  // Decorative top flourish
+                                  // Top flourish.
                                   if (unfoldProgress > 0.3) ...[
                                     Opacity(
-                                      opacity: ((unfoldProgress - 0.3) / 0.7).clamp(0.0, 1.0),
+                                      opacity: ((unfoldProgress - 0.3) / 0.7)
+                                          .clamp(0.0, 1.0),
                                       child: Column(
                                         children: [
                                           const Text(
-                                            '~ ✦ ~',
+                                            '~ \u2726 ~',
                                             style: TextStyle(
                                               fontSize: 18,
                                               color: Color(0xFFAB7042),
@@ -183,7 +203,7 @@ class _VintagePaper extends StatelessWidget {
                                           Container(
                                             width: 60,
                                             height: 1.5,
-                                            decoration: BoxDecoration(
+                                            decoration: const BoxDecoration(
                                               gradient: LinearGradient(
                                                 colors: [
                                                   Colors.transparent,
@@ -198,14 +218,14 @@ class _VintagePaper extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 20),
                                   ],
-                                  // Main handwritten content
+                                  // Main handwritten content.
                                   if (unfoldProgress > 0.5)
                                     Opacity(
-                                      opacity: (unfoldProgress > 0.5
-                                          ? ((unfoldProgress - 0.5) / 0.5).clamp(0.0, 1.0)
-                                          : 0.0).clamp(0.0, 1.0),
+                                      opacity: ((unfoldProgress - 0.5) / 0.5)
+                                          .clamp(0.0, 1.0),
                                       child: Text(
-                                        content ?? 'My dearest Zainab,\n\nYou make every day special.\n\nLove,',
+                                        content ??
+                                            'My dearest Zainab,\n\nYou make every day special.\n\nLove,',
                                         style: const TextStyle(
                                           fontSize: 17,
                                           height: 1.85,
@@ -217,17 +237,18 @@ class _VintagePaper extends StatelessWidget {
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
-                                  // Decorative bottom flourish
+                                  // Bottom flourish.
                                   if (unfoldProgress > 0.7) ...[
                                     const SizedBox(height: 24),
                                     Opacity(
-                                      opacity: ((unfoldProgress - 0.7) / 0.3).clamp(0.0, 1.0),
+                                      opacity: ((unfoldProgress - 0.7) / 0.3)
+                                          .clamp(0.0, 1.0),
                                       child: Column(
                                         children: [
                                           Container(
                                             width: 60,
                                             height: 1.5,
-                                            decoration: BoxDecoration(
+                                            decoration: const BoxDecoration(
                                               gradient: LinearGradient(
                                                 colors: [
                                                   Colors.transparent,
@@ -239,7 +260,7 @@ class _VintagePaper extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 8),
                                           const Text(
-                                            '~ ✦ ~',
+                                            '~ \u2726 ~',
                                             style: TextStyle(
                                               fontSize: 18,
                                               color: Color(0xFFAB7042),
@@ -270,6 +291,8 @@ class _VintagePaper extends StatelessWidget {
   }
 }
 
+// ── Custom clippers & painters (all static — shouldRepaint = false) ──────────
+
 class _TornEdgesClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -278,7 +301,6 @@ class _TornEdgesClipper extends CustomClipper<Path> {
 
     path.moveTo(0, 0);
 
-    // Top edge - torn/jagged
     for (int i = 0; i < 10; i++) {
       final x = (i / 10) * size.width;
       final nextX = ((i + 1) / 10) * size.width;
@@ -287,7 +309,6 @@ class _TornEdgesClipper extends CustomClipper<Path> {
       path.lineTo(nextX, y * 0.3);
     }
 
-    // Right edge - torn/jagged
     path.lineTo(size.width, 0);
     for (int i = 0; i < 10; i++) {
       final y = (i / 10) * size.height;
@@ -297,7 +318,6 @@ class _TornEdgesClipper extends CustomClipper<Path> {
       path.lineTo(x * 0.99, nextY);
     }
 
-    // Bottom edge - torn/jagged
     path.lineTo(size.width, size.height);
     for (int i = 10; i > 0; i--) {
       final x = (i / 10) * size.width;
@@ -307,7 +327,6 @@ class _TornEdgesClipper extends CustomClipper<Path> {
       path.lineTo(prevX, y * 0.995);
     }
 
-    // Left edge - torn/jagged
     path.lineTo(0, size.height);
     for (int i = 10; i > 0; i--) {
       final y = (i / 10) * size.height;
@@ -328,7 +347,6 @@ class _TornEdgesClipper extends CustomClipper<Path> {
 class _AuthenticPaperTexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Fine paper grain
     final grainPaint = Paint()
       ..color = Colors.brown.withValues(alpha: 0.02)
       ..strokeWidth = 0.5;
@@ -336,26 +354,17 @@ class _AuthenticPaperTexturePainter extends CustomPainter {
     for (int i = 0; i < 40; i++) {
       final y = (i * size.height) / 40;
       if (i % 2 == 0) {
-        canvas.drawLine(
-          Offset(0, y),
-          Offset(size.width, y),
-          grainPaint,
-        );
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), grainPaint);
       }
     }
 
-    // Horizontal texture lines
     final linePaint = Paint()
       ..color = Colors.brown.withValues(alpha: 0.015)
       ..strokeWidth = 1;
 
     for (int i = 0; i < 30; i++) {
       final x = (i * size.width) / 30;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        linePaint,
-      );
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
   }
 
@@ -369,7 +378,6 @@ class _PaperAgingPainter extends CustomPainter {
     final spotPaint = Paint()
       ..color = Colors.brown.withValues(alpha: 0.04);
 
-    // Random aging spots throughout paper
     final spots = [
       (Offset(size.width * 0.15, size.height * 0.2), 12.0),
       (Offset(size.width * 0.8, size.height * 0.15), 8.0),
@@ -383,7 +391,6 @@ class _PaperAgingPainter extends CustomPainter {
       canvas.drawCircle(spot.$1, spot.$2, spotPaint);
     }
 
-    // Edge darkening (vignette effect)
     final edgePaint = Paint()
       ..shader = RadialGradient(
         colors: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants.dart';
 import '../../widgets/animated_envelope.dart';
 import '../../widgets/day_icon.dart';
 import '../../widgets/note_paper.dart';
@@ -84,21 +85,21 @@ class DayPage extends StatefulWidget {
   String get defaultNote {
     switch (day) {
       case 7:
-        return 'A rose for the beauty of your love.\n💐';
+        return 'A rose for the beauty of your love.\n\u{1F490}';
       case 8:
-        return 'I want to spend my forever with you.\n💍';
+        return 'I want to spend my forever with you.\n\u{1F48D}';
       case 9:
-        return 'Sweet as chocolate, that\'s you.\n🍫';
+        return 'Sweet as chocolate, that\'s you.\n\u{1F36B}';
       case 10:
-        return 'Hug this bear like I hug you.\n🧸';
+        return 'Hug this bear like I hug you.\n\u{1F9F8}';
       case 11:
-        return 'I promise to love you always.\n🤝';
+        return 'I promise to love you always.\n\u{1F91D}';
       case 12:
-        return 'My favorite place is your arms.\n🤗';
+        return 'My favorite place is your arms.\n\u{1F917}';
       case 13:
-        return 'Every kiss with you is magical.\n😘';
+        return 'Every kiss with you is magical.\n\u{1F618}';
       default:
-        return 'I love you.\n💕';
+        return 'I love you.\n\u{1F495}';
     }
   }
 
@@ -110,15 +111,11 @@ class _DayPageState extends State<DayPage> {
   bool _noteVisible = false;
 
   void _openEnvelope() {
-    setState(() {
-      _noteVisible = true;
-    });
+    setState(() => _noteVisible = true);
   }
 
   void _reset() {
-    setState(() {
-      _noteVisible = false;
-    });
+    setState(() => _noteVisible = false);
   }
 
   @override
@@ -136,10 +133,14 @@ class _DayPageState extends State<DayPage> {
       ),
       body: Stack(
         children: [
+          // Background gradient.
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFFF0F5), color.withValues(alpha: 0.1)],
+                colors: [
+                  const Color(0xFFFFF0F5),
+                  color.withValues(alpha: 0.1),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -153,22 +154,67 @@ class _DayPageState extends State<DayPage> {
                 children: [
                   DayIcon(icon: icon, color: color),
                   const SizedBox(height: 32),
+                  // Envelope → Note transition with smooth crossfade + scale.
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: _noteVisible ? const SizedBox.shrink() : AnimatedEnvelope(onOpen: _openEnvelope, accentColor: color),
+                    duration: Anim.medium,
+                    switchInCurve: Anim.defaultOut,
+                    switchOutCurve: Anim.defaultIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.92, end: 1.0)
+                              .animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _noteVisible
+                        ? const SizedBox.shrink(key: ValueKey('empty-env'))
+                        : AnimatedEnvelope(
+                            key: const ValueKey('envelope'),
+                            onOpen: _openEnvelope,
+                            accentColor: color,
+                          ),
                   ),
                   const SizedBox(height: 24),
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    child: _noteVisible ? NotePaper(content: noteContent) : const SizedBox.shrink(),
+                    duration: Anim.medium,
+                    switchInCurve: Anim.defaultOut,
+                    switchOutCurve: Anim.defaultIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.08),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _noteVisible
+                        ? NotePaper(
+                            key: const ValueKey('note'),
+                            content: noteContent,
+                          )
+                        : const SizedBox.shrink(key: ValueKey('empty-note')),
                   ),
                   const SizedBox(height: 16),
-                  if (_noteVisible)
-                    FloatingActionButton.small(
-                      onPressed: _reset,
-                      backgroundColor: color,
-                      child: const Icon(Icons.replay),
-                    ),
+                  // Reset button with animated appearance.
+                  AnimatedSwitcher(
+                    duration: Anim.fast,
+                    switchInCurve: Anim.bounce,
+                    child: _noteVisible
+                        ? FloatingActionButton.small(
+                            key: const ValueKey('reset-btn'),
+                            onPressed: _reset,
+                            backgroundColor: color,
+                            child: const Icon(Icons.replay),
+                          )
+                        : const SizedBox.shrink(key: ValueKey('empty-btn')),
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),

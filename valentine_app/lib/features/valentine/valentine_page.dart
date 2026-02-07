@@ -1,7 +1,10 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/state/app_providers.dart';
 import 'package:just_audio/just_audio.dart';
+
+import '../../core/constants.dart';
+import '../../core/state/app_providers.dart';
 
 class ValentinePage extends ConsumerStatefulWidget {
   const ValentinePage({super.key});
@@ -28,15 +31,18 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
   @override
   void dispose() {
     try {
-      final player = ref.read(audioPlayerProvider);
-      player.stop();
+      ref.read(audioPlayerProvider).stop();
     } catch (_) {}
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final memories = List.generate(6, (i) => 'assets/images/valentine_memory${i + 1}.png');
+    final memories = List.generate(
+      6,
+      (i) => 'assets/images/valentine_memory${i + 1}.png',
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Our Love Journey'),
@@ -51,11 +57,7 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
             const SizedBox(height: 16),
             _JourneyPath(memories: memories),
             const SizedBox(height: 48),
-            const Text(
-              'I love you ♥',
-              style: TextStyle(fontSize: 36, fontFamily: 'Handwritten', color: Colors.pink, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
+            const _FadeInText(),
             const SizedBox(height: 24),
           ],
         ),
@@ -64,6 +66,71 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
   }
 }
 
+// ── "I love you" text with fade‑in entrance ─────────────────────────────────
+class _FadeInText extends StatefulWidget {
+  const _FadeInText();
+
+  @override
+  State<_FadeInText> createState() => _FadeInTextState();
+}
+
+class _FadeInTextState extends State<_FadeInText>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _fade;
+  late final Animation<double> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Anim.defaultIn);
+    _slide = Tween<double>(begin: 20, end: 0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Anim.defaultOut),
+    );
+    // Delay so it appears after the journey path starts.
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(0, _slide.value),
+            child: child,
+          ),
+        );
+      },
+      child: const Text(
+        'I love you \u2665',
+        style: TextStyle(
+          fontSize: 36,
+          fontFamily: 'Handwritten',
+          color: Colors.pink,
+          fontWeight: FontWeight.w600,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+// ── Journey path with staggered photo card entrances ────────────────────────
 class _JourneyPath extends StatelessWidget {
   final List<String> memories;
   const _JourneyPath({required this.memories});
@@ -74,23 +141,24 @@ class _JourneyPath extends StatelessWidget {
       children: List.generate(memories.length, (index) {
         final isOdd = index % 2 == 1;
         return Padding(
-          padding: EdgeInsets.only(bottom: 48),
+          padding: const EdgeInsets.only(bottom: 48),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (isOdd) ...[
-                Expanded(child: SizedBox.shrink()),
+                const Expanded(child: SizedBox.shrink()),
                 const SizedBox(width: 16),
               ],
               _PathNode(index: index, isOdd: isOdd),
               const SizedBox(width: 16),
-              if (!isOdd)
-                Expanded(child: SizedBox.shrink()),
+              if (!isOdd) const Expanded(child: SizedBox.shrink()),
               Expanded(
-                child: _PhotoCard(imagePath: memories[index], index: index),
+                child: _StaggeredPhotoCard(
+                  imagePath: memories[index],
+                  index: index,
+                ),
               ),
-              if (isOdd)
-                Expanded(child: SizedBox.shrink()),
+              if (isOdd) const Expanded(child: SizedBox.shrink()),
             ],
           ),
         );
@@ -99,6 +167,65 @@ class _JourneyPath extends StatelessWidget {
   }
 }
 
+// ── Staggered entrance wrapper for each photo card ──────────────────────────
+class _StaggeredPhotoCard extends StatefulWidget {
+  final String imagePath;
+  final int index;
+  const _StaggeredPhotoCard({required this.imagePath, required this.index});
+
+  @override
+  State<_StaggeredPhotoCard> createState() => _StaggeredPhotoCardState();
+}
+
+class _StaggeredPhotoCardState extends State<_StaggeredPhotoCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _fade;
+  late final Animation<double> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: Anim.slow,
+    );
+    _fade = CurvedAnimation(parent: _entranceCtrl, curve: Anim.defaultIn);
+    _slide = Tween<double>(begin: 40.0, end: 0.0).animate(
+      CurvedAnimation(parent: _entranceCtrl, curve: Anim.defaultOut),
+    );
+
+    // Staggered delay based on card index.
+    Future.delayed(Anim.staggerDelay * (widget.index + 1), () {
+      if (mounted) _entranceCtrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _entranceCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _entranceCtrl,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(0, _slide.value),
+            child: child,
+          ),
+        );
+      },
+      child: _PhotoCard(imagePath: widget.imagePath, index: widget.index),
+    );
+  }
+}
+
+// ── Path node ───────────────────────────────────────────────────────────────
 class _PathNode extends StatelessWidget {
   final int index;
   final bool isOdd;
@@ -108,7 +235,6 @@ class _PathNode extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Connector line above
         if (index > 0)
           SizedBox(
             height: 48,
@@ -117,7 +243,6 @@ class _PathNode extends StatelessWidget {
               painter: _CurvePathPainter(isOdd: isOdd),
             ),
           ),
-        // Node circle
         Container(
           width: 24,
           height: 24,
@@ -149,6 +274,7 @@ class _PathNode extends StatelessWidget {
   }
 }
 
+// ── Photo card with smooth eased flip ───────────────────────────────────────
 class _PhotoCard extends StatefulWidget {
   final String imagePath;
   final int index;
@@ -158,13 +284,15 @@ class _PhotoCard extends StatefulWidget {
   State<_PhotoCard> createState() => _PhotoCardState();
 }
 
-class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _PhotoCardState extends State<_PhotoCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final CurvedAnimation _curved;
   bool _flipped = false;
 
-  final List<String> _notes = [
+  final List<String> _notes = const [
     'Our first moment together...',
-    'You made me smile that day 💕',
+    'You made me smile that day \u{1F495}',
     'One of my favorite memories',
     'Your laugh is my favorite sound',
     'Every moment with you is special',
@@ -175,8 +303,12 @@ class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMi
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: Anim.cardFlip,
       vsync: this,
+    );
+    _curved = CurvedAnimation(
+      parent: _controller,
+      curve: Anim.cardFlipCurve,
     );
   }
 
@@ -200,10 +332,10 @@ class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMi
     return GestureDetector(
       onTap: _toggleFlip,
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: _curved,
         builder: (context, child) {
-          final angle = _controller.value * 3.14159;
-          final isBack = _controller.value > 0.5;
+          final angle = _curved.value * pi;
+          final isBack = _curved.value > 0.5;
 
           return Transform(
             alignment: Alignment.center,
@@ -213,7 +345,7 @@ class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMi
             child: isBack
                 ? Transform(
                     alignment: Alignment.center,
-                    transform: Matrix4.identity()..rotateY(3.14159),
+                    transform: Matrix4.identity()..rotateY(pi),
                     child: _NoteCard(note: _notes[widget.index]),
                   )
                 : _SquarePhotoCard(imagePath: widget.imagePath),
@@ -224,6 +356,7 @@ class _PhotoCardState extends State<_PhotoCard> with SingleTickerProviderStateMi
   }
 }
 
+// ── Square photo card ───────────────────────────────────────────────────────
 class _SquarePhotoCard extends StatelessWidget {
   final String imagePath;
   const _SquarePhotoCard({required this.imagePath});
@@ -272,6 +405,7 @@ class _SquarePhotoCard extends StatelessWidget {
   }
 }
 
+// ── Note card (flip back side) ──────────────────────────────────────────────
 class _NoteCard extends StatelessWidget {
   final String note;
   const _NoteCard({required this.note});
@@ -284,7 +418,10 @@ class _NoteCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.pink.withValues(alpha: 0.3), width: 2),
+          border: Border.all(
+            color: Colors.pink.withValues(alpha: 0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.pink.withValues(alpha: 0.3),
@@ -311,10 +448,7 @@ class _NoteCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  '💕',
-                  style: TextStyle(fontSize: 24),
-                ),
+                const Text('\u{1F495}', style: TextStyle(fontSize: 24)),
               ],
             ),
           ),
@@ -324,6 +458,7 @@ class _NoteCard extends StatelessWidget {
   }
 }
 
+// ── Curve path painter (static) ─────────────────────────────────────────────
 class _CurvePathPainter extends CustomPainter {
   final bool isOdd;
   _CurvePathPainter({required this.isOdd});
@@ -337,8 +472,6 @@ class _CurvePathPainter extends CustomPainter {
 
     final path = Path();
     path.moveTo(size.width / 2, 0);
-
-    // Curved path connecting nodes
     path.cubicTo(
       size.width / 2,
       size.height / 3,
@@ -347,7 +480,6 @@ class _CurvePathPainter extends CustomPainter {
       size.width / 2,
       size.height,
     );
-
     canvas.drawPath(path, paint);
   }
 

@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart';
+
+import '../../core/constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/utils/page_transitions.dart';
 import '../../core/state/app_providers.dart';
-import 'package:just_audio/just_audio.dart';
+import '../../widgets/falling_hearts.dart';
+
 import '../days/day_page.dart';
 import '../days/rose_page.dart';
 import '../days/propose_page.dart';
@@ -13,9 +19,6 @@ import '../days/promise_page.dart';
 import '../days/hug_page.dart';
 import '../days/kiss_page.dart';
 import '../valentine/valentine_page.dart';
-import 'dart:async';
-import '../../widgets/falling_hearts.dart';
-import 'dart:math';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -23,36 +26,96 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Stream<DateTime> _countdownStream;
+class _HomePageState extends ConsumerState<HomePage>
+    with TickerProviderStateMixin {
+  // ── Controllers ────────────────────────────────────────────────────────────
+  late final AnimationController _bobCtrl;
+  late final CurvedAnimation _bobCurved;
 
-  // Define unlock dates for each Valentine week day
-  // Pages will be locked until their respective date arrives
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _titleSlide;
+  late final Animation<double> _titleFade;
+  late final Animation<double> _buttonSlide;
+  late final Animation<double> _buttonFade;
+
+  // Single timer for countdown instead of multiple StreamBuilders.
+  Timer? _countdownTimer;
+
+  // ── Unlock dates ───────────────────────────────────────────────────────────
   static const Map<int, int> pageUnlockDates = {
-    // For testing: map actual days to Feb 1..7 so pages unlock earlier
-    1: 1,   // Rose Day - Test unlock Feb 1
-    2: 1,   // Propose Day - Test unlock Feb 2
-    3: 1,   // Chocolate Day - Test unlock Feb 3
-    4: 1,   // Teddy Day - Test unlock Feb 4
-    5: 1,   // Promise Day - Test unlock Feb 5
-    6: 1,   // Hug Day - Test unlock Feb 6
-    7: 1,   // Kiss Day - Test unlock Feb 7
-    8: 1,   // Valentine Day - Test unlock Feb 8
+    1: 1, // Rose Day
+    2: 1, // Propose Day
+    3: 1, // Chocolate Day
+    4: 1, // Teddy Day
+    5: 1, // Promise Day
+    6: 1, // Hug Day
+    7: 1, // Kiss Day
+    8: 1, // Valentine Day
   };
 
+  final Map<int, String> _days = const {
+    1: 'Rose Day',
+    2: 'Propose Day',
+    3: 'Chocolate Day',
+    4: 'Teddy Day',
+    5: 'Promise Day',
+    6: 'Hug Day',
+    7: 'Kiss Day',
+  };
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
-    
-    // Create a broadcast stream that emits the current time every second
-    // Use asBroadcastStream() to allow multiple listeners
-    _countdownStream = Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()).asBroadcastStream();
-    
+
+    // Gentle bobbing animation with smooth sine‑curve.
+    _bobCtrl = AnimationController(vsync: this, duration: Anim.heartBob)
+      ..repeat(reverse: true);
+    _bobCurved = CurvedAnimation(parent: _bobCtrl, curve: Anim.gentle);
+
+    // Staggered entrance for title + button.
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _titleSlide = Tween<double>(begin: 30.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _entranceCtrl,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
+      ),
+    );
+    _titleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceCtrl,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
+    );
+    _buttonSlide = Tween<double>(begin: 24.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _entranceCtrl,
+        curve: const Interval(0.35, 0.85, curve: Curves.easeOutCubic),
+      ),
+    );
+    _buttonFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceCtrl,
+        curve: const Interval(0.35, 0.75, curve: Curves.easeIn),
+      ),
+    );
+    _entranceCtrl.forward();
+
+    // Single 1‑second timer for countdown refresh.
+    _countdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (mounted) setState(() {});
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoNavigate());
 
-    // start optional background audio for the home screen
+    // Background audio.
     final player = ref.read(audioPlayerProvider);
     () async {
       try {
@@ -71,66 +134,77 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
       if (day == 14) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ValentinePage()));
+        Navigator.of(context).push(ScaleFadeRoute(page: const ValentinePage()));
       } else {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => DayPage(day: day)));
+        Navigator.of(context).push(FadeSlideRoute(page: DayPage(day: day)));
       }
     }
   }
 
   @override
   void dispose() {
-    // stop home audio when leaving
+    _countdownTimer?.cancel();
     try {
-      final player = ref.read(audioPlayerProvider);
-      player.stop();
+      ref.read(audioPlayerProvider).stop();
     } catch (_) {}
-    _ctrl.dispose();
+    _bobCtrl.dispose();
+    _entranceCtrl.dispose();
     super.dispose();
   }
 
-    final Map<int, String> _days = const {
-      1: 'Rose Day',
-      2: 'Propose Day',
-      3: 'Chocolate Day',
-      4: 'Teddy Day',
-      5: 'Promise Day',
-      6: 'Hug Day',
-      7: 'Kiss Day',
-    };
-
+  // ── Helpers ────────────────────────────────────────────────────────────────
   bool _locked(int day) {
     final now = DateTime.now();
     final unlockDate = pageUnlockDates[day];
-
-    if (unlockDate == null) return true; // Safety: lock if day not found
-
-    // Page is locked if current date is before the unlock date in February
+    if (unlockDate == null) return true;
     return now.month != 2 || now.day < unlockDate;
   }
 
   String _getCountdownText(int day) {
     final now = DateTime.now();
     final unlockDate = pageUnlockDates[day];
-    
     if (unlockDate == null) return 'N/A';
-    
-    // Create unlock datetime for Feb [day] at 00:00:00
-    final targetDate = DateTime(now.year, 2, unlockDate, 0, 0, 0);
-    
-    // If we're past the unlock date, return empty
+    final targetDate = DateTime(now.year, 2, unlockDate);
     if (!now.isBefore(targetDate)) return '';
-    
     final remaining = targetDate.difference(now);
-    
-    final days = remaining.inDays;
-    final hours = remaining.inHours % 24;
-    final minutes = remaining.inMinutes % 60;
-    final seconds = remaining.inSeconds % 60;
-    
-    return '$days days $hours hrs $minutes mins $seconds secs remaining';
+    final d = remaining.inDays;
+    final h = remaining.inHours % 24;
+    final m = remaining.inMinutes % 60;
+    final s = remaining.inSeconds % 60;
+    return '$d days $h hrs $m mins $s secs remaining';
   }
 
+  void _navigateToDay(int key) {
+    Widget page;
+    switch (key) {
+      case 1:
+        page = const RosePage();
+        break;
+      case 2:
+        page = const ProposePage();
+        break;
+      case 3:
+        page = const ChocolatePage();
+        break;
+      case 4:
+        page = const TeddyPage();
+        break;
+      case 5:
+        page = const PromisePage();
+        break;
+      case 6:
+        page = const HugPage();
+        break;
+      case 7:
+        page = const KissPage();
+        break;
+      default:
+        page = DayPage(day: key);
+    }
+    Navigator.of(context).push(FadeSlideRoute(page: page));
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,117 +213,144 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
         backgroundColor: AppTheme.primary,
         elevation: 0,
       ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const DrawerHeader(child: Text('Valentine Week', style: TextStyle(fontSize: 20))),
-              ..._days.entries.map((e) {
-                final entry = e; // capture per-iteration value to avoid closure capture bug
-                final locked = _locked(entry.key);
-                return StreamBuilder<DateTime>(
-                  stream: _countdownStream,
-                  builder: (context, snapshot) {
-                    return ListTile(
-                      leading: Icon(locked ? Icons.lock : Icons.check, color: locked ? Colors.grey : AppTheme.primary),
-                      title: Text(entry.value),
-                      subtitle: locked ? Text(_getCountdownText(entry.key), style: const TextStyle(fontSize: 12)) : null,
-                      onTap: locked
-                          ? null
-                          : () {
-                              Widget page;
-                              switch (entry.key) {
-                                case 1:
-                                  page = const RosePage();
-                                  break;
-                                case 2:
-                                  page = const ProposePage();
-                                  break;
-                                case 3:
-                                  page = const ChocolatePage();
-                                  break;
-                                case 4:
-                                  page = const TeddyPage();
-                                  break;
-                                case 5:
-                                  page = const PromisePage();
-                                  break;
-                                case 6:
-                                  page = const HugPage();
-                                  break;
-                                case 7:
-                                  page = const KissPage();
-                                  break;
-                                default:
-                                  page = DayPage(day: entry.key);
-                              }
-                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-                            },
-                    );
-                  },
-                );
-              }),
-              StreamBuilder<DateTime>(
-                stream: _countdownStream,
-                builder: (context, snapshot) {
-                  final locked = _locked(8);
-                  final countdown = _getCountdownText(8);
-                  return ListTile(
-                    leading: Icon(locked ? Icons.lock : Icons.favorite, color: locked ? Colors.grey : Colors.pink),
-                    title: const Text('Valentine Day'),
-                    subtitle: locked && countdown.isNotEmpty ? Text(countdown, style: const TextStyle(fontSize: 12)) : null,
-                    onTap: locked
-                        ? null
-                        : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ValentinePage())),
-                  );
-                },
-              )
-            ],
-          ),
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: Stack(
         children: [
+          // Background gradient.
           Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFFFFF0F5), Color(0xFFFFE6EB)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              gradient: LinearGradient(
+                colors: [Color(0xFFFFF0F5), Color(0xFFFFE6EB)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
           ),
           const FallingHearts(),
           Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              AnimatedBuilder(
-                animation: _ctrl,
-                builder: (context, child) {
-                  final t = _ctrl.value;
-                  final dy = (t - 0.5) * 8.0;
-                  final scale = 0.96 + 0.04 * (1 + (t - 0.5).abs() * -1);
-                  return Transform.translate(
-                    offset: Offset(0, dy),
-                    child: Transform.scale(scale: scale, child: child),
-                  );
-                },
-                child: Row(mainAxisSize: MainAxisSize.min, children: const [
-                  Text('Hi Name, my love ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
-                  SizedBox(width: 8),
-                  _GlowingHeart(),
-                ]),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Welcome ♥'))),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-                child: const Text('Open'),
-              ),
-            ]),
+            child: AnimatedBuilder(
+              animation: _entranceCtrl,
+              builder: (context, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── Floating title with smooth bob ──
+                    Opacity(
+                      opacity: _titleFade.value,
+                      child: Transform.translate(
+                        offset: Offset(0, _titleSlide.value),
+                        child: AnimatedBuilder(
+                          animation: _bobCurved,
+                          builder: (context, child) {
+                            final dy = (_bobCurved.value - 0.5) * 6.0;
+                            final scale = 0.97 + 0.03 * _bobCurved.value;
+                            return Transform.translate(
+                              offset: Offset(0, dy),
+                              child: Transform.scale(
+                                scale: scale,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                'Hi Name, my love ',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              _GlowingHeart(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // ── Button with staggered fade‑in ──
+                    Opacity(
+                      opacity: _buttonFade.value,
+                      child: Transform.translate(
+                        offset: Offset(0, _buttonSlide.value),
+                        child: ElevatedButton(
+                          onPressed: () => ScaffoldMessenger.of(context)
+                              .showSnackBar(
+                                const SnackBar(content: Text('Welcome ♥')),
+                              ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                          ),
+                          child: const Text('Open'),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+
+  // ── Drawer (rebuilt once per second via single Timer.periodic) ──────────
+  Widget _buildDrawer() {
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              child: Text('Valentine Week', style: TextStyle(fontSize: 20)),
+            ),
+            ..._days.entries.map((entry) {
+              final locked = _locked(entry.key);
+              return ListTile(
+                leading: Icon(
+                  locked ? Icons.lock : Icons.check,
+                  color: locked ? Colors.grey : AppTheme.primary,
+                ),
+                title: Text(entry.value),
+                subtitle: locked
+                    ? Text(
+                        _getCountdownText(entry.key),
+                        style: const TextStyle(fontSize: 12),
+                      )
+                    : null,
+                onTap: locked ? null : () => _navigateToDay(entry.key),
+              );
+            }),
+            Builder(builder: (_) {
+              final locked = _locked(8);
+              final countdown = _getCountdownText(8);
+              return ListTile(
+                leading: Icon(
+                  locked ? Icons.lock : Icons.favorite,
+                  color: locked ? Colors.grey : Colors.pink,
+                ),
+                title: const Text('Valentine Day'),
+                subtitle: locked && countdown.isNotEmpty
+                    ? Text(countdown, style: const TextStyle(fontSize: 12))
+                    : null,
+                onTap: locked
+                    ? null
+                    : () => Navigator.of(context).push(
+                          ScaleFadeRoute(page: const ValentinePage()),
+                        ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+// ── Glowing Heart ────────────────────────────────────────────────────────────
 class _GlowingHeart extends StatefulWidget {
   const _GlowingHeart();
 
@@ -257,13 +358,17 @@ class _GlowingHeart extends StatefulWidget {
   State<_GlowingHeart> createState() => _GlowingHeartState();
 }
 
-class _GlowingHeartState extends State<_GlowingHeart> with SingleTickerProviderStateMixin {
+class _GlowingHeartState extends State<_GlowingHeart>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c;
+  late final CurvedAnimation _curved;
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _c = AnimationController(vsync: this, duration: Anim.heartGlow)
+      ..repeat(reverse: true);
+    _curved = CurvedAnimation(parent: _c, curve: Anim.gentle);
   }
 
   @override
@@ -275,14 +380,26 @@ class _GlowingHeartState extends State<_GlowingHeart> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _c,
+      animation: _curved,
       builder: (context, child) {
-        final glow = 0.6 + 0.4 * _c.value;
+        final glow = 0.55 + 0.45 * _curved.value;
         return Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.pink.withValues(alpha: glow * 0.45), blurRadius: 12 * glow)]),
-          child: const Icon(Icons.favorite, color: Colors.pink, size: 28),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pink.withValues(alpha: glow * 0.45),
+                blurRadius: 14 * glow,
+              ),
+            ],
+          ),
+          child: Transform.scale(
+            scale: 0.92 + 0.08 * _curved.value,
+            child: child,
+          ),
         );
       },
+      child: const Icon(Icons.favorite, color: Colors.pink, size: 28),
     );
   }
 }
