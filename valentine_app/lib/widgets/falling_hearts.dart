@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
 
 /// Particle data for a single falling heart.
 class _Heart {
@@ -10,6 +11,7 @@ class _Heart {
   final double opacity; // base opacity
   final double drift; // horizontal sine‑wave amplitude (normalised)
   final double driftPhase; // phase offset for sine‑wave
+  final int colorIndex; // index into the romantic color palette
 
   const _Heart({
     required this.x,
@@ -18,8 +20,20 @@ class _Heart {
     required this.opacity,
     required this.drift,
     required this.driftPhase,
+    required this.colorIndex,
   });
 }
+
+/// Multi-toned romantic heart colours — deep rose, coral, rose-gold, etc.
+const List<Color> _heartColors = [
+  AppTheme.deepCoral,       // deep coral
+  AppTheme.primary,          // deep rose
+  AppTheme.roseGold,         // rose gold
+  AppTheme.primaryLight,     // vibrant rose
+  Color(0xFFE57373),         // warm coral
+  Color(0xFFFF80AB),         // soft pink
+  AppTheme.roseGoldDark,     // dark rose-gold
+];
 
 class FallingHearts extends StatefulWidget {
   final int count;
@@ -46,9 +60,10 @@ class _FallingHeartsState extends State<FallingHearts>
         x: rnd.nextDouble(),
         speed: 0.35 + rnd.nextDouble() * 0.65,
         size: 4.0 + rnd.nextDouble() * 5.0,
-        opacity: 0.10 + rnd.nextDouble() * 0.22,
+        opacity: 0.12 + rnd.nextDouble() * 0.24,
         drift: 0.008 + rnd.nextDouble() * 0.025,
         driftPhase: rnd.nextDouble() * 2 * pi,
+        colorIndex: rnd.nextInt(_heartColors.length),
       );
     });
   }
@@ -108,15 +123,16 @@ class _HeartsPainter extends CustomPainter {
       // Slight size shrink as particle falls further.
       final radius = h.size * (0.7 + 0.3 * (1 - progress));
 
-      paint.color = Colors.pink.withValues(alpha: alpha);
+      final heartColor = _heartColors[h.colorIndex];
+      paint.color = heartColor.withValues(alpha: alpha);
       canvas.drawCircle(Offset(x, y), radius, paint);
 
-      // Soft sparkle highlight.
+      // Warm sparkle highlight with rose-gold tint.
       if (i % 3 == 0 && fadeFactor > 0.5) {
-        paint.color = Colors.white.withValues(alpha: alpha * 0.45);
+        paint.color = AppTheme.warmCream.withValues(alpha: alpha * 0.55);
         canvas.drawCircle(
           Offset(x + radius * 0.6, y - radius * 0.5),
-          radius * 0.22,
+          radius * 0.24,
           paint,
         );
       }

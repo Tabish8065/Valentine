@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
 
 class AnimatedEnvelope extends StatefulWidget {
   final VoidCallback? onOpen;
@@ -8,7 +9,7 @@ class AnimatedEnvelope extends StatefulWidget {
   const AnimatedEnvelope({
     super.key,
     this.onOpen,
-    this.accentColor = Colors.pink,
+    this.accentColor = AppTheme.deepCoral,
   });
 
   @override
@@ -112,12 +113,22 @@ class _AnimatedEnvelopeState extends State<AnimatedEnvelope>
                 child: Container(
                   margin: const EdgeInsets.only(top: 20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.envelopeBody,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.roseGoldLight.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 12,
+                        color: AppTheme.envelopeShadow.withValues(alpha: 0.12),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: AppTheme.roseGold.withValues(alpha: 0.06),
+                        blurRadius: 24,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),

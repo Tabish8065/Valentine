@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../widgets/animated_envelope.dart';
 import '../../widgets/day_icon.dart';
 import '../../widgets/note_paper.dart';
@@ -64,42 +65,102 @@ class DayPage extends StatefulWidget {
   Color get defaultColor {
     switch (day) {
       case 7:
-        return Colors.red;
+        return AppTheme.roseDay;
       case 8:
-        return Colors.pink;
+        return AppTheme.proposeDay;
       case 9:
-        return Colors.brown;
+        return AppTheme.chocolateDay;
       case 10:
-        return Colors.purple;
+        return AppTheme.teddyDay;
       case 11:
-        return Colors.pinkAccent;
+        return AppTheme.promiseDay;
       case 12:
-        return Colors.orange;
+        return AppTheme.hugDay;
       case 13:
-        return Colors.redAccent;
+        return AppTheme.kissDay;
       default:
-        return Colors.pink;
+        return AppTheme.primary;
     }
   }
 
   String get defaultNote {
     switch (day) {
       case 7:
-        return 'A rose for the beauty of your love.\n\u{1F490}';
+        return 'My dearest Zainab,\n\n'
+            'If I could give you a rose for every time you made my heart skip a beat, '
+            'you would have an endless garden.\n\n'
+            'You are the most beautiful thing that has ever happened to me. '
+            'Your smile blooms brighter than any flower, and your love fills '
+            'every corner of my world with colour.\n\n'
+            'Happy Rose Day, my love \u{1F339}\n\n'
+            'Forever yours';
       case 8:
-        return 'I want to spend my forever with you.\n\u{1F48D}';
+        return 'My dearest Zainab,\n\n'
+            'I have rehearsed a thousand speeches in my head, but when I look '
+            'into your eyes, all I can say is this:\n\n'
+            'You are the one I want to wake up next to every morning, the one I '
+            'want to share every sunset with, and the one I want to grow old beside.\n\n'
+            'I choose you — today, tomorrow, and every day after that. '
+            'Will you keep choosing me too?\n\n'
+            'Happy Propose Day \u{1F48D}\n\n'
+            'All my love';
       case 9:
-        return 'Sweet as chocolate, that\'s you.\n\u{1F36B}';
+        return 'My dearest Zainab,\n\n'
+            'They say chocolate is the sweetest thing in the world, but whoever '
+            'said that never knew you.\n\n'
+            'Your laughter is sweeter than the richest truffle, your voice '
+            'more soothing than warm cocoa on a cold night, and your love '
+            'melts my heart the way nothing else can.\n\n'
+            'Life with you is the sweetest treat I never want to stop savouring.\n\n'
+            'Happy Chocolate Day \u{1F36B}\n\n'
+            'Sweetly yours';
       case 10:
-        return 'Hug this bear like I hug you.\n\u{1F9F8}';
+        return 'My dearest Zainab,\n\n'
+            'If I could wrap all my love into something you could hold close, '
+            'it would still not be enough.\n\n'
+            'But until I can be there to hold you myself, let this little teddy '
+            'remind you that you are never alone. Squeeze it tight whenever '
+            'you miss me, and know that I am thinking of you in that exact same moment.\n\n'
+            'You are my comfort, my warmth, my home.\n\n'
+            'Happy Teddy Day \u{1F9F8}\n\n'
+            'Hugs always';
       case 11:
-        return 'I promise to love you always.\n\u{1F91D}';
+        return 'My dearest Zainab,\n\n'
+            'Today I make you these promises, not because the calendar tells me to, '
+            'but because my heart cannot hold them in any longer:\n\n'
+            'I promise to be your safe place when the world feels heavy.\n'
+            'I promise to celebrate your joy as if it were my own.\n'
+            'I promise to choose patience when we stumble.\n'
+            'I promise to love you louder on the quiet days.\n'
+            'And I promise to never stop trying to be the reason you smile.\n\n'
+            'Happy Promise Day \u{1F91D}\n\n'
+            'With all my heart';
       case 12:
-        return 'My favorite place is your arms.\n\u{1F917}';
+        return 'My dearest Zainab,\n\n'
+            'There is a kind of peace I only find in your arms — the kind '
+            'where the whole world goes quiet and nothing else matters.\n\n'
+            'Every hug from you feels like coming home after the longest day, '
+            'like a whisper that says "everything will be alright." '
+            'I carry the warmth of your embrace with me wherever I go.\n\n'
+            'One day, I will hold you and never have to let go.\n\n'
+            'Happy Hug Day \u{1F917}\n\n'
+            'Wrapped in your love';
       case 13:
-        return 'Every kiss with you is magical.\n\u{1F618}';
+        return 'My dearest Zainab,\n\n'
+            'If I could freeze a single moment in time, it would be the one '
+            'right before our lips meet — that heartbeat of anticipation '
+            'where the whole universe holds its breath.\n\n'
+            'Every kiss with you writes a story that words could never tell. '
+            'It is tenderness, it is fire, it is a promise sealed without a sound.\n\n'
+            'Tomorrow is Valentine\'s Day, and there is no one else I would '
+            'rather share it with than you.\n\n'
+            'Happy Kiss Day \u{1F618}\n\n'
+            'Yours, always and completely';
       default:
-        return 'I love you.\n\u{1F495}';
+        return 'My dearest Zainab,\n\n'
+            'Every day with you is a gift I never want to stop unwrapping.\n\n'
+            'I love you \u{1F495}\n\n'
+            'Forever yours';
     }
   }
 
@@ -126,10 +187,19 @@ class _DayPageState extends State<DayPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(
+          widget.title,
+          style: TextStyle(
+            fontFamily: 'Handwritten',
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textDark,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        foregroundColor: AppTheme.textDark,
       ),
       body: Stack(
         children: [
@@ -138,8 +208,9 @@ class _DayPageState extends State<DayPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFFFF0F5),
-                  color.withValues(alpha: 0.1),
+                  AppTheme.homeGradient[0],
+                  color.withValues(alpha: 0.12),
+                  AppTheme.homeGradient[1],
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,

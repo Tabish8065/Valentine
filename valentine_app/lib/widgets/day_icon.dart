@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
 
 class DayIcon extends StatefulWidget {
   final IconData icon;
@@ -69,9 +70,17 @@ class _DayIconState extends State<DayIcon>
                   boxShadow: [
                     BoxShadow(
                       color: widget.color.withValues(
-                        alpha: 0.6 * _glow.value,
+                        alpha: 0.55 * _glow.value,
                       ),
-                      blurRadius: 20 * _glow.value,
+                      blurRadius: 22 * _glow.value,
+                      spreadRadius: 2 * _glow.value,
+                    ),
+                    BoxShadow(
+                      color: AppTheme.roseGold.withValues(
+                        alpha: 0.2 * _glow.value,
+                      ),
+                      blurRadius: 36 * _glow.value,
+                      spreadRadius: 4 * _glow.value,
                     ),
                   ],
                 ),

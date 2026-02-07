@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
 
 class Envelope extends StatefulWidget {
   final VoidCallback? onOpen;
@@ -80,12 +81,21 @@ class _EnvelopeState extends State<Envelope>
                 child: Container(
                   margin: const EdgeInsets.only(top: 18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.envelopeBody,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.roseGoldLight.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
+                        color: AppTheme.envelopeShadow.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                      ),
+                      BoxShadow(
+                        color: AppTheme.roseGold.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
@@ -110,9 +120,13 @@ class _EnvelopeState extends State<Envelope>
                     width: 220,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.pink[50],
+                      color: AppTheme.envelopeFlap,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(10),
+                      ),
+                      border: Border.all(
+                        color: AppTheme.roseGoldLight.withValues(alpha: 0.2),
+                        width: 0.5,
                       ),
                     ),
                     child: Center(
@@ -120,7 +134,7 @@ class _EnvelopeState extends State<Envelope>
                         _opened
                             ? Icons.mark_email_read
                             : Icons.mark_email_unread,
-                        color: Colors.pink[300],
+                        color: AppTheme.deepCoral,
                       ),
                     ),
                   ),

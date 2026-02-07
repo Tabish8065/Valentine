@@ -209,9 +209,18 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Valentine Week'),
+        title: Text(
+          'Valentine Week',
+          style: TextStyle(
+            fontFamily: 'Handwritten',
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textOnPrimary,
+          ),
+        ),
         backgroundColor: AppTheme.primary,
         elevation: 0,
+        iconTheme: const IconThemeData(color: AppTheme.textOnPrimary),
       ),
       drawer: _buildDrawer(),
       body: Stack(
@@ -220,7 +229,7 @@ class _HomePageState extends ConsumerState<HomePage>
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFFF0F5), Color(0xFFFFE6EB)],
+                colors: AppTheme.homeGradient,
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -254,16 +263,19 @@ class _HomePageState extends ConsumerState<HomePage>
                           },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Text(
-                                'Hi Name, my love ',
+                                'Hi Zainab, my love ',
                                 style: TextStyle(
                                   fontSize: 28,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Handwritten',
+                                  color: AppTheme.textDark,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              _GlowingHeart(),
+                              const SizedBox(width: 8),
+                              const _GlowingHeart(),
                             ],
                           ),
                         ),
@@ -282,8 +294,25 @@ class _HomePageState extends ConsumerState<HomePage>
                               ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
+                            foregroundColor: AppTheme.textOnPrimary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 6,
+                            shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                           ),
-                          child: const Text('Open'),
+                          child: const Text(
+                            'Open My Heart',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -300,41 +329,100 @@ class _HomePageState extends ConsumerState<HomePage>
   // ── Drawer (rebuilt once per second via single Timer.periodic) ──────────
   Widget _buildDrawer() {
     return Drawer(
+      backgroundColor: AppTheme.warmCream,
       child: SafeArea(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              child: Text('Valentine Week', style: TextStyle(fontSize: 20)),
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primary, AppTheme.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Icon(Icons.favorite, color: AppTheme.blush, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Valentine Week',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontFamily: 'Handwritten',
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textOnPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'A week of love, just for you',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textOnPrimary.withValues(alpha: 0.8),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
             ),
             ..._days.entries.map((entry) {
               final locked = _locked(entry.key);
               return ListTile(
                 leading: Icon(
-                  locked ? Icons.lock : Icons.check,
-                  color: locked ? Colors.grey : AppTheme.primary,
+                  locked ? Icons.lock_outline : Icons.favorite,
+                  color: locked
+                      ? AppTheme.roseGoldLight.withValues(alpha: 0.5)
+                      : AppTheme.primary,
                 ),
-                title: Text(entry.value),
+                title: Text(
+                  entry.value,
+                  style: TextStyle(
+                    color: locked ? AppTheme.textLight : AppTheme.textDark,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 subtitle: locked
                     ? Text(
                         _getCountdownText(entry.key),
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textLight.withValues(alpha: 0.7),
+                        ),
                       )
                     : null,
                 onTap: locked ? null : () => _navigateToDay(entry.key),
               );
             }),
+            const Divider(color: AppTheme.roseGoldLight, indent: 16, endIndent: 16),
             Builder(builder: (_) {
               final locked = _locked(8);
               final countdown = _getCountdownText(8);
               return ListTile(
                 leading: Icon(
-                  locked ? Icons.lock : Icons.favorite,
-                  color: locked ? Colors.grey : Colors.pink,
+                  locked ? Icons.lock_outline : Icons.favorite,
+                  color: locked
+                      ? AppTheme.roseGoldLight.withValues(alpha: 0.5)
+                      : AppTheme.deepCoral,
                 ),
-                title: const Text('Valentine Day'),
+                title: Text(
+                  'Valentine Day',
+                  style: TextStyle(
+                    color: locked ? AppTheme.textLight : AppTheme.textDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 subtitle: locked && countdown.isNotEmpty
-                    ? Text(countdown, style: const TextStyle(fontSize: 12))
+                    ? Text(
+                        countdown,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textLight.withValues(alpha: 0.7),
+                        ),
+                      )
                     : null,
                 onTap: locked
                     ? null
@@ -388,8 +476,14 @@ class _GlowingHeartState extends State<_GlowingHeart>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.pink.withValues(alpha: glow * 0.45),
-                blurRadius: 14 * glow,
+                color: AppTheme.deepCoral.withValues(alpha: glow * 0.5),
+                blurRadius: 18 * glow,
+                spreadRadius: 2 * glow,
+              ),
+              BoxShadow(
+                color: AppTheme.primary.withValues(alpha: glow * 0.25),
+                blurRadius: 28 * glow,
+                spreadRadius: 4 * glow,
               ),
             ],
           ),
@@ -399,7 +493,7 @@ class _GlowingHeartState extends State<_GlowingHeart>
           ),
         );
       },
-      child: const Icon(Icons.favorite, color: Colors.pink, size: 28),
+      child: const Icon(Icons.favorite, color: AppTheme.deepCoral, size: 30),
     );
   }
 }

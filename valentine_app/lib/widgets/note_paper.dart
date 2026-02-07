@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
+import '../core/theme/app_theme.dart';
 
 class NotePaper extends StatefulWidget {
   final String? content;
@@ -139,19 +140,19 @@ class _VintagePaper extends StatelessWidget {
                     height: paperHeight,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFFFBF0), Color(0xFFEDE4D3)],
+                        colors: [AppTheme.paperLight, AppTheme.paperDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: AppTheme.roseGoldDark.withValues(alpha: 0.15),
                           blurRadius: 25,
                           spreadRadius: 6,
                           offset: const Offset(0, 10),
                         ),
                         BoxShadow(
-                          color: Colors.brown.withValues(alpha: 0.1),
+                          color: AppTheme.roseGold.withValues(alpha: 0.1),
                           blurRadius: 15,
                           offset: const Offset(-5, 5),
                         ),
@@ -194,7 +195,7 @@ class _VintagePaper extends StatelessWidget {
                                             '~ \u2726 ~',
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFFAB7042),
+                                              color: AppTheme.flourish,
                                               letterSpacing: 6,
                                               fontWeight: FontWeight.w300,
                                             ),
@@ -207,7 +208,7 @@ class _VintagePaper extends StatelessWidget {
                                               gradient: LinearGradient(
                                                 colors: [
                                                   Colors.transparent,
-                                                  Color(0xFFAB7042),
+                                                  AppTheme.flourish,
                                                   Colors.transparent,
                                                 ],
                                               ),
@@ -230,7 +231,7 @@ class _VintagePaper extends StatelessWidget {
                                           fontSize: 17,
                                           height: 1.85,
                                           fontFamily: 'Handwritten',
-                                          color: Color(0xFF6B4423),
+                                          color: AppTheme.paperText,
                                           fontWeight: FontWeight.w500,
                                           letterSpacing: 0.3,
                                         ),
@@ -252,7 +253,7 @@ class _VintagePaper extends StatelessWidget {
                                               gradient: LinearGradient(
                                                 colors: [
                                                   Colors.transparent,
-                                                  Color(0xFFAB7042),
+                                                  AppTheme.flourish,
                                                   Colors.transparent,
                                                 ],
                                               ),
@@ -263,7 +264,7 @@ class _VintagePaper extends StatelessWidget {
                                             '~ \u2726 ~',
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFFAB7042),
+                                              color: AppTheme.flourish,
                                               letterSpacing: 6,
                                               fontWeight: FontWeight.w300,
                                             ),
@@ -348,7 +349,7 @@ class _AuthenticPaperTexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final grainPaint = Paint()
-      ..color = Colors.brown.withValues(alpha: 0.02)
+      ..color = AppTheme.roseGoldDark.withValues(alpha: 0.02)
       ..strokeWidth = 0.5;
 
     for (int i = 0; i < 40; i++) {
@@ -359,7 +360,7 @@ class _AuthenticPaperTexturePainter extends CustomPainter {
     }
 
     final linePaint = Paint()
-      ..color = Colors.brown.withValues(alpha: 0.015)
+      ..color = AppTheme.roseGoldDark.withValues(alpha: 0.015)
       ..strokeWidth = 1;
 
     for (int i = 0; i < 30; i++) {
@@ -376,7 +377,7 @@ class _PaperAgingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final spotPaint = Paint()
-      ..color = Colors.brown.withValues(alpha: 0.04);
+      ..color = AppTheme.roseGold.withValues(alpha: 0.04);
 
     final spots = [
       (Offset(size.width * 0.15, size.height * 0.2), 12.0),
@@ -395,7 +396,7 @@ class _PaperAgingPainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: [
           Colors.transparent,
-          Colors.brown.withValues(alpha: 0.08),
+          AppTheme.roseGold.withValues(alpha: 0.08),
         ],
         radius: 0.8,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
