@@ -44,10 +44,10 @@ class _HomePageState extends ConsumerState<HomePage>
   // ── Unlock dates ───────────────────────────────────────────────────────────
   static const Map<int, int> pageUnlockDates = {
     1: 1, // Rose Day
-    2: 1, // Propose Day
-    3: 1, // Chocolate Day
-    4: 1, // Teddy Day
-    5: 1, // Promise Day
+    2: 2, // Propose Day
+    3: 3, // Chocolate Day
+    4: 4, // Teddy Day
+    5: 5, // Promise Day
     6: 1, // Hug Day
     7: 1, // Kiss Day
     8: 1, // Valentine Day
@@ -115,15 +115,14 @@ class _HomePageState extends ConsumerState<HomePage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoNavigate());
 
-    // Background audio.
+    // Background audio using shared helper (logs errors).
     final player = ref.read(audioPlayerProvider);
     () async {
       try {
-        await player.setAsset('assets/audio/home.wav');
-        player.setLoopMode(LoopMode.one);
-        player.setVolume(0.25);
-        player.play();
-      } catch (_) {}
+        await playBackgroundAudio(player, 'assets/audio/home.mp3');
+      } catch (e) {
+        debugPrint('Audio error (home): $e');
+      }
     }();
   }
 
@@ -290,7 +289,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         child: ElevatedButton(
                           onPressed: () => ScaffoldMessenger.of(context)
                               .showSnackBar(
-                                const SnackBar(content: Text('Welcome ♥')),
+                                const SnackBar(content: Text('I love you Zainab ♥')),
                               ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,

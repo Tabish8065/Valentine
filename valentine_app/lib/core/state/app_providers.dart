@@ -7,7 +7,7 @@ final currentValentineDayProvider = Provider<int?>((ref) {
   return valentineDayForDate(now);
 });
 
-final audioPlayerProvider = Provider.autoDispose<AudioPlayer>((ref) {
+final audioPlayerProvider = Provider<AudioPlayer>((ref) {
   final player = AudioPlayer();
   ref.onDispose(() {
     player.dispose();

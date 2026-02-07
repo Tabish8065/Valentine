@@ -24,39 +24,39 @@ class _MemoryMilestone {
 
 const List<_MemoryMilestone> _milestones = [
   _MemoryMilestone(
-    imagePath: 'assets/images/valentine_memory1.png',
-    label: 'Where It All Began',
-    note: 'Our first moment together...',
+    imagePath: 'assets/images/valentine_memory1.jpg',
+    label: 'Unforgettable Day',
+    note: 'A happy moment together... \nI will try that this stays forever and the journey has just started we have miles to go further.',
     icon: Icons.flag_outlined,
   ),
   _MemoryMilestone(
-    imagePath: 'assets/images/valentine_memory2.png',
-    label: 'First Spark',
-    note: 'You made me smile that day \u{1F495}',
+    imagePath: 'assets/images/valentine_memory2.jpg',
+    label: 'Warmthness of love',
+    note: 'Your cuddle made me feel the love you were trying to show me. I felt the warmthness of you love. \u{1F495}',
     icon: Icons.auto_awesome,
   ),
   _MemoryMilestone(
-    imagePath: 'assets/images/valentine_memory3.png',
-    label: 'An Adventure Together',
-    note: 'One of my favorite memories',
+    imagePath: 'assets/images/valentine_memory3.jpg',
+    label: 'Birthday Celebration',
+    note: 'The unforgettable enjoyment of celebrating your birthday together. \nI hope we can celebrate many more together in the future.',
     icon: Icons.explore_outlined,
   ),
   _MemoryMilestone(
-    imagePath: 'assets/images/valentine_memory4.png',
+    imagePath: 'assets/images/valentine_memory4.jpg',
     label: 'Laughter & Joy',
-    note: 'Your laugh is my favorite sound',
+    note: 'A movie night filled with laughter and joy. \nThe ride back to home was even more memorable, with cool breeze and you. \u{1F604}',
     icon: Icons.emoji_emotions_outlined,
   ),
   _MemoryMilestone(
-    imagePath: 'assets/images/valentine_memory5.png',
-    label: 'A Precious Moment',
-    note: 'Every moment with you is special',
+    imagePath: 'assets/images/valentine_memory5.jpg',
+    label: 'A Precious Day',
+    note: 'The day when the noida journey began. The day of a long ride in cool breeze and you with me.',
     icon: Icons.diamond_outlined,
   ),
   _MemoryMilestone(
     imagePath: 'assets/images/valentine_memory6.png',
-    label: 'Growing Closer',
-    note: 'Forever starts with you',
+    label: 'Not the end',
+    note: 'Forever starts with you. Its not the end of the journey, I am waiting for you in hyderabad.',
     icon: Icons.favorite_border,
   ),
 ];
@@ -76,11 +76,10 @@ class _ValentinePageState extends ConsumerState<ValentinePage> {
     final player = ref.read(audioPlayerProvider);
     () async {
       try {
-        await player.setAsset('assets/audio/valentine.wav');
-        player.setLoopMode(LoopMode.one);
-        player.setVolume(0.3);
-        player.play();
-      } catch (_) {}
+        await playBackgroundAudio(player, 'assets/audio/valentine.mp3');
+      } catch (e) {
+        debugPrint('Audio error (valentine): $e');
+      }
     }();
   }
 
@@ -1151,7 +1150,7 @@ class _GrandTreasureFinaleState extends State<_GrandTreasureFinale>
           ),
           const SizedBox(height: 16),
           const Text(
-            'You are my forever treasure.\nI love you with all my heart.',
+            'You are my forever treasure.\nI love you with all my heart.\nHappy Valentine day. I hope I was able to make each of your day feel special.',
             style: TextStyle(
               fontSize: 15,
               fontFamily: 'Handwritten',
